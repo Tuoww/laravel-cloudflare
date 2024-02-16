@@ -38,21 +38,20 @@ class Images implements API
     public function uploadImage(string $accountID, string $path, $contents): object
     {
         $config = config('cloudflare');
-
+    
         $response = Http::baseUrl("https://api.cloudflare.com/client/v4/accounts/{$accountID}")
             ->withHeaders([
-                'X-Auth-Email' => $config['api_email'],
-                'X-Auth-Key' => $config['api_key'],
+                'Authorization' => 'Bearer ' . $config['api_token'],
             ])
             ->asMultipart()
             ->attach('file', $contents, $path)
             ->post('images/v1');
-
+    
         $response->throw();
-
+    
         return $response->object()->result;
     }
-
+    
     public function deleteImage(string $accountID, string $path): string
     {
         $response = $this->adapter->delete("accounts/{$accountID}/images/v1/{$path}");
