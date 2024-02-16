@@ -41,7 +41,7 @@ class Images implements API
     
         $response = Http::baseUrl("https://api.cloudflare.com/client/v4/accounts/{$accountID}")
             ->withHeaders([
-                'Authorization' => 'Bearer ' . $config['api_token'],
+                'Authorization' => 'Bearer ' . $config['api_key'],
             ])
             ->asMultipart()
             ->attach('file', $contents, $path)
