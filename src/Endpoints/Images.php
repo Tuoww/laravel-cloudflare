@@ -96,7 +96,7 @@ class Images implements API
      */
     public function getBaseImage(string $accountID, string $path): string
     {
-        $response = $this->adapter->get("accounts/{$accountID}/images/v1/{$path}/blob");
+        $response = $this->adapter->get("accounts/{$accountID}/images/v1/{$path}/public");
 
         $this->body = $response->getBody();
 
