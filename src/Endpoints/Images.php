@@ -55,7 +55,7 @@ class Images implements API
     public function deleteImage(string $accountID, string $path): string
     {
         $response = $this->adapter->delete("accounts/{$accountID}/images/v1/{$path}");
-
+        dd($response);
         $this->body = $response->getBody();
 
         return $this->body->getContents();
