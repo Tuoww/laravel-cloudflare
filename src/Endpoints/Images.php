@@ -54,11 +54,21 @@ class Images implements API
     
     public function deleteImage(string $accountID, string $path): string
     {
-        $response = $this->adapter->delete("accounts/{$accountID}/images/v1/{$path}");
-        dd($response);
-        $this->body = $response->getBody();
+        $config = config('cloudflare');
+        $client = new Client([
+            // Base URI is used for relative requests
+            'base_uri' => 'https://api.cloudflare.com/',
+        ]);
 
-        return $this->body->getContents();
+        $response = $client->request('DELETE', "client/v4/accounts/{$accountID}/images/v1/{$path}", [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $config['api_key'],
+            ],
+        ]);
+
+        $body = $response->getBody();
+
+        return $body->getContents();
     }
 
     public function getImagesUsageStatistics(string $accountID, string $path): string
