@@ -6,6 +6,7 @@ use Cloudflare\API\Adapter\Adapter;
 use Cloudflare\API\Endpoints\API;
 use Cloudflare\API\Traits\BodyAccessorTrait;
 use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
 
 class Images implements API
 {
