@@ -5,6 +5,7 @@ namespace Foodticket\Cloudflare\Endpoints;
 use Cloudflare\API\Adapter\Adapter;
 use Cloudflare\API\Endpoints\API;
 use Cloudflare\API\Traits\BodyAccessorTrait;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use GuzzleHttp\Client;
 
@@ -36,7 +37,7 @@ class Images implements API
         return $this->body->result->images;
     }
 
-    public function uploadImage(string $accountID, string $path, $contents): object
+    public function uploadImage(string $accountID, string $path, $contents, string $id = null, array $metadata = [], ?string $batchToken = null): object
     {
         $config = config('cloudflare');
     
@@ -112,5 +113,39 @@ class Images implements API
         $this->body = $response->getBody();
 
         return $this->body->getContents();
+    }
+
+    /**
+     * Get batch API token for making unrated, consecutive requests.
+     */
+    public function getBatchToken(string $accountID): string
+    {
+        $response = $this->adapter->get("accounts/{$accountID}/images/v1/batch_token");
+
+        $this->body = $response->getBody();
+
+        return json_decode($this->body->getContents())->result->token;
+    }
+
+    private function getRequestObject(string $accountID, ?string $batchToken): PendingRequest
+    {
+        $config = config('cloudflare');
+
+        $baseUrl = $batchToken
+            ? "https://batch.imagedelivery.net"
+            : "https://api.cloudflare.com/client/v4/accounts/{$accountID}";
+
+        $http = Http::baseUrl($baseUrl);
+
+        if ($batchToken) {
+            return $http->withToken(
+                $batchToken
+            );
+        }
+
+        return $http->withHeaders([
+            'X-Auth-Email' => $config['api_email'],
+            'X-Auth-Key' => $config['api_key'],
+        ]);
     }
 }
