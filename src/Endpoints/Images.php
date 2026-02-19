@@ -7,6 +7,7 @@ use Cloudflare\API\Endpoints\API;
 use Cloudflare\API\Traits\BodyAccessorTrait;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
 
 class Images implements API
 {
@@ -38,40 +39,38 @@ class Images implements API
 
     public function uploadImage(string $accountID, string $path, $contents, string $id = null, array $metadata = [], ?string $batchToken = null): object
     {
-        $body = [
-            'file' => [
-                'Content-type' => 'multipart/form-data',
-                'name' => 'file',
-                'filename' => $path,
-                'contents' => $contents,
-            ],
-        ];
-
-        if ($id) {
-            $body['id'] = $id;
-        }
-
-        if (!empty($metadata)) {
-            $body['metadata'] = \GuzzleHttp\json_encode($metadata);
-        }
-
-        $http = $this->getRequestObject(accountID: $accountID, batchToken: $batchToken);
-
-        $response = $http->asMultipart()
-            ->post('images/v1', $body);
-
+        $config = config('cloudflare');
+    
+        $response = Http::baseUrl("https://api.cloudflare.com/client/v4/accounts/{$accountID}")
+            ->withHeaders([
+                'Authorization' => 'Bearer ' . $config['api_key'],
+            ])
+            ->asMultipart()
+            ->attach('file', $contents, $path)
+            ->post('images/v1');
+    
         $response->throw();
-
+    
         return $response->object()->result;
     }
-
+    
     public function deleteImage(string $accountID, string $path): string
     {
-        $response = $this->adapter->delete("accounts/{$accountID}/images/v1/{$path}");
+        $config = config('cloudflare');
+        $client = new Client([
+            // Base URI is used for relative requests
+            'base_uri' => 'https://api.cloudflare.com/',
+        ]);
 
-        $this->body = $response->getBody();
+        $response = $client->request('DELETE', "client/v4/accounts/{$accountID}/images/v1/{$path}", [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $config['api_key'],
+            ],
+        ]);
 
-        return $this->body->getContents();
+        $body = $response->getBody();
+
+        return $body->getContents();
     }
 
     public function getImagesUsageStatistics(string $accountID, string $path): string
@@ -109,7 +108,7 @@ class Images implements API
      */
     public function getBaseImage(string $accountID, string $path): string
     {
-        $response = $this->adapter->get("accounts/{$accountID}/images/v1/{$path}/blob");
+        $response = $this->adapter->get("accounts/{$accountID}/images/v1/{$path}/public");
 
         $this->body = $response->getBody();
 
